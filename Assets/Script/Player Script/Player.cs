@@ -109,7 +109,8 @@ public class Player : MonoBehaviour
     private void OnGrounded()
     {
                                      //gameobject, arrow position, arrow range, target layer
-        isgrounded = Physics2D.Raycast(obj.position, Vector2.down, 0.1f,groundlayer);
+        isgrounded = Physics2D.CircleCast(obj.position,0.2f, Vector2.down, 0.1f,groundlayer);
+        Debug.DrawRay(obj.position, Vector3.down, Color.red, 0.1f);
 
         if (isgrounded && jumped)
         {
