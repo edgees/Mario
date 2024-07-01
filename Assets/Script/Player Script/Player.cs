@@ -2,6 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+using TMPro;
+using Unity.VisualScripting;
+using UnityEngine.UIElements;
+using Unity.VisualScripting.Antlr3.Runtime.Tree;
 
 public class Player : MonoBehaviour
 {
@@ -17,18 +23,35 @@ public class Player : MonoBehaviour
 
     private bool jumped;
     private bool isgrounded;
+    private int coin;
+
+    private TMP_Text ScoreText;
+    private AudioSource CoinPickUpSound;
+
+    public string CurrentScene;
+    public string NextScene;
+    public AudioSource Win;
+    private bool Stun;
+    public AudioSource DieSound;
+
 
     private void Awake()
     {
         myBody = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
+        CoinPickUpSound = GetComponent<AudioSource>();
+        ScoreText = GameObject.Find("ScoreText (TMP)").GetComponent<TMP_Text>();
+        //Win = GetComponent<AudioSource>();
+        Stun = false;
+
+        
     }
 
     // Start is called before the first frame update
-    void Start()
-    {
+    //void Start()
+    //{
 
-    }
+    //}
 
     // Update is called once per frame
     void Update()
@@ -43,41 +66,49 @@ public class Player : MonoBehaviour
         //    onground = false;
         //}
 
+        PlayerWalk(Stun);
         OnGrounded();
-        PlayerJump();
+        PlayerJump(Stun);
+        Die();
     }
 
-    private void FixedUpdate()
-    {
-        PlayerWalk();
+    //private void FixedUpdate()
+    //{
         
-    }
-    void PlayerWalk()
+    //}
+    void PlayerWalk(bool a)
     {
-        float h = Input.GetAxis("Horizontal");
-        myBody.velocity = new Vector2(h * speed, myBody.velocity.y);
-        //ChangeDirection((int)h);
-        if (h > 0)
+        if (!a)
         {
-            //myBody.velocity = new Vector2(speed, myBody.velocity.y);
-            ChangeDirection(1);
-        }
-        else if (h < 0)
-        {
-            //myBody.velocity = new Vector2(-speed, myBody.velocity.y);
-            ChangeDirection(-1);
-        }
-        else
-        {
-            myBody.velocity = new Vector2(0f, myBody.velocity.y);
-        }
+            float h = Input.GetAxis("Horizontal");
+            myBody.velocity = new Vector2(h * speed, myBody.velocity.y);
+            //ChangeDirection((int)h);
+            if (h > 0)
+            {
+                //myBody.velocity = new Vector2(speed, myBody.velocity.y);
+                ChangeDirection(1);
+            }
+            else if (h < 0)
+            {
+                //myBody.velocity = new Vector2(-speed, myBody.velocity.y);
+                ChangeDirection(-1);
+            }
+            else
+            {
+                myBody.velocity = new Vector2(0f, myBody.velocity.y);
+            }
 
-        //if (onground == true && Input.GetKeyDown(KeyCode.Space))
-        //{
-        //    myBody.velocity = new Vector2(myBody.velocity.x, jumppower);
-        //}
+            //if (onground == true && Input.GetKeyDown(KeyCode.Space))
+            //{
+            //    myBody.velocity = new Vector2(myBody.velocity.x, jumppower);
+            //}
 
-        anim.SetInteger("Speed", Mathf.Abs((int)myBody.velocity.x));
+            anim.SetInteger("Speed", Mathf.Abs((int)myBody.velocity.x));
+        }
+        else if (a)
+        {
+            myBody.velocity = new Vector2(0, myBody.velocity.y);
+        }
     }
 
     void ChangeDirection(int direction)
@@ -94,7 +125,17 @@ public class Player : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Tri"))
         {
+            CoinPickUpSound.Play();
             Debug.Log("is a triangle");
+            coin = coin +1;
+            Debug.Log("Coins: " + coin);
+            ScoreText.text = "X " + coin.ToString();
+            Destroy(collision.gameObject);
+        }
+
+        if (collision.name == "castle" || collision.name == "Flag")
+        {
+            StartCoroutine(Wining(2f));
         }
     }
 
@@ -121,17 +162,56 @@ public class Player : MonoBehaviour
         
     }
 
-    private void PlayerJump()
+    private void PlayerJump(bool a)
     {
-        if (isgrounded)
+        if (!a)
         {
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (isgrounded)
             {
-                jumped = true;
+                //Debug.Log("is ground");
+                if (Input.GetKey(KeyCode.Space))
+                {
+                    jumped = true;
 
-                myBody.velocity = new Vector2(myBody.velocity.x, jumppower);
-                anim.SetBool("Jump", true);
+                    myBody.velocity = new Vector2(myBody.velocity.x, jumppower);
+                    anim.SetBool("Jump", true);
+                }
             }
         }
     }
+
+    private void Die()
+    {
+        if (transform.position.y < -14)
+        {
+            StartCoroutine(Dying(2f));
+        }
+    }
+
+    IEnumerator Wining(float second)
+    {
+        Debug.Log("time: " + Time.time);
+        GameObject.Find("Background Music").SetActive(false);
+        Win.Play();
+        Stun = true;
+        anim.SetInteger("Speed",0);
+        
+
+        yield return new WaitForSeconds(second);
+        Debug.Log("time: " + Time.time);
+        SceneManager.LoadScene(NextScene);
+    }
+
+    public IEnumerator Dying(float second)
+    {
+        this.Stun = true;
+        GameObject.Find("Background Music").SetActive(false);
+        anim.Play("Player Die");
+        DieSound.Play();
+        
+
+        yield return new WaitForSeconds(second);
+        SceneManager.LoadScene(CurrentScene);   
+    }
+
 }

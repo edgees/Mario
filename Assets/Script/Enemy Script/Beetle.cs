@@ -16,6 +16,9 @@ public class Beetle : MonoBehaviour
     public Transform top;
     public LayerMask player;
     private bool stun;
+    private bool oncol;
+    public GameObject DamageZone;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -29,9 +32,9 @@ public class Beetle : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        EnemyWalking(stun);
-        CheckCollision();
         detectplayer();
+        EnemyWalking(stun);
+        CheckCollision(stun);   
     }
 
     void EnemyWalking(bool a)
@@ -52,11 +55,15 @@ public class Beetle : MonoBehaviour
 
     }
 
-    void CheckCollision()
+    void CheckCollision(bool stun)
     {
-        if (!Physics2D.Raycast(obj.position, Vector2.down, 0.1f, groundlayer))
+        if (!stun)
         {
-            ChangeDirection();
+            if (!Physics2D.Raycast(obj.position, Vector2.down, 0.5f, groundlayer) || oncol)
+            {
+                ChangeDirection();
+                oncol = false;
+            }
         }
     }
 
@@ -80,28 +87,40 @@ public class Beetle : MonoBehaviour
 
     private void detectplayer()
     {
-        Debug.DrawRay(right.position, Vector2.right, Color.blue, 0.5f);
-        if (Physics2D.Raycast(right.position, Vector2.right, 0.5f, player))
+        if (!stun)
         {
-            Debug.Log("damage (right)");
-        }
+            if (Physics2D.CircleCast(top.position, 0.2f, Vector2.up, 0.1f, player))
+            {
+                die();
+            }
 
-        Debug.DrawRay(left.position, Vector2.left, Color.blue, 0.5f);
-        if (Physics2D.Raycast(left.position, Vector2.left, 0.5f, player))
-        {
-            Debug.Log("damage (left)");
-        }
+            Debug.DrawRay(right.position, Vector2.right, Color.blue, 0.5f);
+            if (Physics2D.Raycast(right.position, Vector2.right, 0.5f, player))
+            {
+                Debug.Log("damage (right)");
+            }
 
-        if (Physics2D.CircleCast(top.position, 0.2f, Vector2.up, 0.1f, player))
-        {
-            die();
+            Debug.DrawRay(left.position, Vector2.left, Color.blue, 0.5f);
+            if (Physics2D.Raycast(left.position, Vector2.left, 0.5f, player))
+            {
+                Debug.Log("damage (left)");
+            }
+
         }
     }
 
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.gameObject.layer == LayerMask.NameToLayer("ground"))
+        {
+            oncol = true;
+        } 
+    }
 
     void die()
     {
         stun = true;
+        Destroy(DamageZone);
         anim.SetBool("die",true);
         Destroy(gameObject,0.5f);
     }

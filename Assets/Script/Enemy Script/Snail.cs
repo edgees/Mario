@@ -20,6 +20,10 @@ public class Snail : MonoBehaviour
     public Transform snailRay;
     public LayerMask Player;
     private bool stun;
+    private bool oncol;
+    public bool detectplayer;
+    private GameObject player;
+    public GameObject DamageZone;
 
     // Start is called before the first frame update
     void Start()
@@ -33,14 +37,17 @@ public class Snail : MonoBehaviour
         Left = left_coll.transform;
         Right = right_coll.transform;
 
+        oncol = false;
+        detectplayer = false;
+        player = GameObject.FindGameObjectWithTag("Player");
     }
 
     // Update is called once per frame
-    void Update()
+    private void Update()
     {
-        SnailMoving(stun);
-        CheckCollision();
         DetectPlayer();
+        SnailMoving(stun);
+        CheckCollision(stun);
     }
 
     void SnailMoving(bool a)
@@ -62,11 +69,15 @@ public class Snail : MonoBehaviour
         }
     }
 
-    void CheckCollision()
+    void CheckCollision(bool stun)
     {
-        if (!Physics2D.Raycast(obj.position, Vector2.down, 0.1f, groundlayer))
+        if (!stun)
         {
-            ChangeDirection();
+            if (!Physics2D.Raycast(obj.position, Vector2.down, 0.1f, groundlayer) || oncol)
+            {
+                ChangeDirection();
+                oncol = false;
+            }
         }
     }
 
@@ -100,26 +111,36 @@ public class Snail : MonoBehaviour
 
     private void DetectPlayer()
     {
-        if (Physics2D.Raycast(left_coll.position, Vector2.left, 0.5f, Player))
+        if (!stun)
         {
-            Debug.Log("Damage (left)");
+            if (Physics2D.CircleCast(top_coll.position, 0.2f, Vector2.up, 0.1f, Player))
+            {
+                Stun();
+                //Die();
+            }
+
+            if (Physics2D.Raycast(left_coll.position, Vector2.left, 0.5f, Player))
+            {
+                Debug.Log("Damage (left)");
+                //StartCoroutine(player.GetComponent<Player>().Dying(2f));
+                //player.GetComponent<Player>().die = true;
+
+            }
+
+            if (Physics2D.Raycast(right_coll.position, Vector2.right, 0.5f, Player))
+            {
+                Debug.Log("Damage (right)");
+                //StartCoroutine(player.GetComponent<Player>().Dying(2f));
+                //player.GetComponent<Player>().die = true;
+            }
         }
 
-        if (Physics2D.Raycast(right_coll.position, Vector2.right, 0.5f, Player))
-        {
-            Debug.Log("Damage (right)");
-        }
-
-        if (Physics2D.CircleCast(top_coll.position,0.2f,Vector2.up,0.1f,Player))
-        {
-            Stun();
-            //Die();
-        }
     }
 
     void Stun()
     {
         stun = true;
+        Destroy(DamageZone) ;
         anim.SetBool("Stun", true);
     }
 
@@ -128,4 +149,20 @@ public class Snail : MonoBehaviour
         anim.SetBool("Die", true);
         Destroy(gameObject,1f);
     }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.gameObject.layer == LayerMask.NameToLayer("ground"))
+        {
+            oncol = true;
+        }
+    }
+
+    //private void OnCollisionEnter2D(Collision2D collision)
+    //{
+    //    if (collision.gameObject.CompareTag("Player"))
+    //    {
+    //        StartCoroutine(player.GetComponent<Player>().Dying(2f));
+    //    }
+    //}
 }
