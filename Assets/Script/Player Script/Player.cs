@@ -1,13 +1,9 @@
 using System.Collections;
-using System.Collections.Generic;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
-using Unity.VisualScripting;
-using UnityEngine.UIElements;
-using Unity.VisualScripting.Antlr3.Runtime.Tree;
+
 
 public class Player : MonoBehaviour
 {
@@ -33,6 +29,7 @@ public class Player : MonoBehaviour
     public AudioSource Win;
     private bool Stun;
     public AudioSource DieSound;
+    public AudioSource JumpSound;
 
 
     private void Awake()
@@ -117,7 +114,15 @@ public class Player : MonoBehaviour
         //{ direction = 1; }
 
         Vector3 temp = transform.localScale;
-        temp.x = direction;
+        if (direction == 1)
+        {
+            temp.x = Mathf.Abs(temp.x);
+        }
+        else if (direction == -1)
+        {
+            temp.x = -Mathf.Abs(temp.x);
+        }
+
         transform.localScale = temp;
     }
 
@@ -172,6 +177,7 @@ public class Player : MonoBehaviour
                 if (Input.GetKey(KeyCode.Space))
                 {
                     jumped = true;
+                    JumpSound.Play();
 
                     myBody.velocity = new Vector2(myBody.velocity.x, jumppower);
                     anim.SetBool("Jump", true);

@@ -25,6 +25,8 @@ public class Snail : MonoBehaviour
     private GameObject player;
     public GameObject DamageZone;
 
+    public AudioSource DieSound;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -113,7 +115,7 @@ public class Snail : MonoBehaviour
     {
         if (!stun)
         {
-            if (Physics2D.CircleCast(top_coll.position, 0.2f, Vector2.up, 0.1f, Player))
+            if (Physics2D.CircleCast(top_coll.position, 0.3f, Vector2.up, 0.1f, Player))
             {
                 Stun();
                 //Die();
@@ -139,6 +141,7 @@ public class Snail : MonoBehaviour
 
     void Stun()
     {
+        DieSound.Play();
         stun = true;
         Destroy(DamageZone) ;
         anim.SetBool("Stun", true);

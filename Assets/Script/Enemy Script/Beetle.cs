@@ -19,6 +19,8 @@ public class Beetle : MonoBehaviour
     private bool oncol;
     public GameObject DamageZone;
 
+    public AudioSource DieSound;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -89,7 +91,7 @@ public class Beetle : MonoBehaviour
     {
         if (!stun)
         {
-            if (Physics2D.CircleCast(top.position, 0.2f, Vector2.up, 0.1f, player))
+            if (Physics2D.CircleCast(top.position, 0.3f, Vector2.up, 0.1f, player))
             {
                 die();
             }
@@ -119,6 +121,7 @@ public class Beetle : MonoBehaviour
 
     void die()
     {
+        DieSound.Play();
         stun = true;
         Destroy(DamageZone);
         anim.SetBool("die",true);
